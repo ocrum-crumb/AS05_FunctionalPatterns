@@ -2,27 +2,29 @@
 module Data.Option where
 import Prelude hiding (lookup)
 
-todo :: a
-todo = error "TODO"
-
 -- An `Option a` models a value of type `a` which may be missing.
 data Option a = None | Some a deriving (Show, Eq)
 
 -- Now implement Functor, Applicative and Monad
 instance Functor Option where
     fmap :: (a -> b) -> Option a -> Option b
-    fmap = todo
+    fmap _ None     = None
+    fmap f (Some a) = Some (f a)
+
 
 instance Applicative Option where
     pure :: a -> Option a
-    pure = todo
+    pure = Some
 
     (<*>) :: Option (a -> b) -> Option a -> Option b
-    (<*>) = todo
+    None <*> _        = None           -- If the function is None, return None
+    _ <*> None        = None           -- If the value is None, return None
+    Some f <*> Some a = Some (f a)     -- Apply the function f to the value a
 
 instance Monad Option where
-  (>>=) :: Option a -> (a -> Option b) -> Option b
-  (>>=) = todo
+    (>>=) :: Option a -> (a -> Option b) -> Option b
+    None >>= _      = None        -- If it's None, return None
+    Some a >>= f    = f a         -- If it's Some, apply the function f
 
 -- TODO: Check your definitions by running the tests:
 -- > cabal test option --test-show-details=direct
@@ -72,12 +74,15 @@ balanceByEmail' email =
 -- TODO: Implement the same functionality as above using `>>=` 
 -- instead of pattern matching:
 balanceByEmail'' :: String -> Option Double
-balanceByEmail'' email = todo
+balanceByEmail'' email = userIdByEmail email >>= \uid -> accountByUserId uid >>= \acc -> return (balance acc)
+
 
 -- TODO: Implement the same functionality as above using do-notation:
 balanceByEmail :: String -> Option Double
 balanceByEmail email = do
-  todo
+  uid <- userIdByEmail email
+  acc <- accountByUserId uid
+  return (balance acc)
 
 main :: IO ()
 main = do
